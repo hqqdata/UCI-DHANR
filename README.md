@@ -5,7 +5,10 @@ tensorflow 1.14.0
 
 # Dataset
 ## the homepage data for training/test
+We release the sampling data. The complete data will be released after the thesis is successfully employed.
+
 channel.data         8000 lines
+
 channel.test         2000 lines
 
 
