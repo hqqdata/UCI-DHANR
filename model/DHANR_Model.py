@@ -7,7 +7,7 @@ from tensorflow.python.keras.layers import Layer
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.initializers import Ones, Zeros
 import numpy as np
-
+from tensorflow.python.keras.layers import Conv1D
 
 class Encoder():
     def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, layers=2, dropout=0.1):
@@ -26,10 +26,27 @@ class Encoder():
 class EncoderLayer():
     def __init__(self, d_model, d_inner_hid, n_head, d_k, d_v, dropout=0.1):
         self.self_att_layer = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout)
+        self.ffn_layer = FeedForward(d_model, d_inner_hid, dropout=dropout)
 
     def __call__(self, enc_input, mask=None):
         output, slf_attn = self.self_att_layer(enc_input, enc_input, enc_input, mask=mask)
+        output = self.ffn_layer(output)
         return output, slf_attn
+
+
+class FeedForward():
+    def __init__(self, d_hid, d_inner_hid, dropout=0.1):
+        self.w_1 = Conv1D(d_inner_hid, 1, activation='relu')
+        self.w_2 = Conv1D(d_hid, 1)
+        self.layer_norm = LayerNormalization()
+        self.dropout = Dropout(dropout)
+
+    def __call__(self, x):
+        output = self.w_1(x)
+        output = self.w_2(output)
+        output = self.dropout(output)
+        output = Add()([output, x])
+        return self.layer_norm(output)
 
 
 class LayerNormalization(Layer):
@@ -160,7 +177,7 @@ def task_specific_attention(inputs, output_size,
 ############################### Main ######################################3
 max_seq_len = 10
 model_dir = './output/dhanr'
-train_epochs = 10
+train_epochs = 8
 epochs_per_eval = 2
 batch_size = 40
 d_model = 7
@@ -403,7 +420,7 @@ for n in range(train_epochs // epochs_per_eval):
         print("{0:20}: {1:.4f}".format(key, results[key]))
 
 preds = model.predict(input_fn=lambda: input_fn(test_file, 1, False, batch_size), predict_keys=None)
-with open("./data/pred.txt", "w") as fo:
+with open("./output/dhanr_pred.txt", "w") as fo:
     for prob in preds:
         print prob
         fo.write("%s\n" % (prob))

@@ -191,7 +191,7 @@ for n in range(train_epochs // epochs_per_eval):
         print("{0:20}: {1:.4f}".format(key, results[key]))
 
 preds = model.predict(input_fn=lambda: input_fn(test_file, 1, False, batch_size), predict_keys=None)
-with open("./data/pred.txt", "w") as fo:
+with open("./output/uci_pred.txt", "w") as fo:
     for prob in preds:
         print prob
         fo.write("%s\n" % (prob))
